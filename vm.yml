@@ -1,0 +1,68 @@
+apiVersion: kubevirt.io/v1
+kind: VirtualMachine
+metadata:
+  labels:
+  name: centos-test
+  namespace: default
+spec:
+  running: true
+  template:
+    metadata:
+      annotations:
+        ovn.kubernetes.io/ip_pool: 172.20.0.110
+    spec:
+      domain:
+        devices:
+          disks:
+          - disk:
+              bus: virtio
+            name: cdromiso
+          - disk:
+              bus: virtio
+            name: data
+          - disk:
+              bus: virtio
+            name: cloudinitdisk
+          interfaces:
+          - bridge: {}
+            name: default
+        machine:
+          type: q35
+        resources:
+          limits:
+            cpu: "2"
+            memory: 2Gi
+          requests:
+            cpu: "2"
+            memory: 2Gi
+      networks:
+      - name: default
+        pod: {}
+      volumes:
+      - name: cdromiso
+        containerDisk:
+          image: home.mrlch.cn:8888/kubevirt/centos:1805-1
+      - name: data
+        hostDisk:
+          capacity: 50Gi
+          path: /home/disk-container-test.img
+          type: DiskOrCreate
+      - cloudInitNoCloud:
+          networkData: |-
+            network:
+              version: 1
+              config:
+                - type: physical
+                  name: eth0
+                  subnets:
+                    - type: dhcp
+          userData: |-
+            #cloud-config
+            disable_root: false
+            ssh_pwauth: true
+            users:
+              - default
+              - name: root
+                lock_passwd: false
+                hashed_passwd: $1$4t.w.u.X$BkdPjEOi30r85GpIaTZ8C1
+        name: cloudinitdisk
