@@ -1,0 +1,67 @@
+apiVersion: kubevirt.io/v1
+kind: VirtualMachineInstanceReplicaSet
+metadata:
+  name: centos
+  namespace: vlan
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      kubevirt.io/vmReplicaSet: vmi-replicaset-cirros
+  template:
+    metadata:
+      labels:
+        kubevirt.io/vmReplicaSet: vmi-replicaset-cirros
+    spec:
+      domain:
+        devices:
+          disks:
+            - disk:
+                bus: virtio
+              name: cdromiso
+            - disk:
+                bus: virtio
+              name: emptydisk
+            - disk:
+                bus: virtio
+              name: cloudinitdisk
+          interfaces:
+            - bridge: {}
+              name: default
+        machine:
+          type: q35
+        resources:
+          requests:
+            memory: 2Gi
+      networks:
+        - name: default
+          pod: {}
+      volumes:
+        - name: cdromiso
+          containerDisk:
+            image: home.mrlch.cn:8888/kubevirt/centos:7.9
+        - name: emptydisk
+          emptyDisk:
+            capacity: 30G
+        - cloudInitNoCloud:
+            networkData: |-
+              network:
+                version: 1
+                config:
+                  - type: physical
+                    name: eth0
+                    subnets:
+                      - type: dhcp
+            userData: |-
+              #cloud-config
+              hostname: test
+              runcmd:
+                - echo 'dasdasd' > /root/dsdas
+              disable_root: false
+              ssh_pwauth: true
+              users:
+                - default
+                - name: root
+                  lock_passwd: false
+                  hashed_passwd: $1$4t.w.u.X$BkdPjEOi30r85GpIaTZ8C1
+          name: cloudinitdisk

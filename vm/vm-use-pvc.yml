@@ -1,17 +1,21 @@
-apiVersion: kubevirt.io/v1
+apiVersion: kubevirt.io/v1alpha3
 kind: VirtualMachine
 metadata:
-  labels:
-  name: centos-test
-  namespace: default
+  name: centos2009
+  namespace: vlan
 spec:
-  running: true
+  running: true   # 此处设置为true创建vm后即自动创建vmi启动虚拟机
   template:
     metadata:
+      labels:
+        kubevirt.io/domain: centos2009
       annotations:
-        ovn.kubernetes.io/ip_pool: 172.20.0.110
+        ovn.kubernetes.io/logical_switch: mail263
+        ovn.kubernetes.io/ip_address: 192.168.10.190
     spec:
       domain:
+        cpu:
+          cores: 1
         devices:
           disks:
           - disk:
@@ -19,34 +23,23 @@ spec:
             name: cdromiso
           - disk:
               bus: virtio
-            name: data
-          - disk:
-              bus: virtio
             name: cloudinitdisk
           interfaces:
-          - bridge: {}
+          - masquerade: {}
+            model: e1000
             name: default
         machine:
           type: q35
         resources:
-          limits:
-            cpu: "2"
-            memory: 2Gi
           requests:
-            cpu: "2"
             memory: 2Gi
       networks:
       - name: default
         pod: {}
       volumes:
       - name: cdromiso
-        containerDisk:
-          image: home.mrlch.cn:8888/kubevirt/centos:1805-1
-      - name: data
-        hostDisk:
-          capacity: 50Gi
-          path: /home/disk-container-test.img
-          type: DiskOrCreate
+        persistentVolumeClaim:
+          claimName: iso-centos2009
       - cloudInitNoCloud:
           networkData: |-
             network:

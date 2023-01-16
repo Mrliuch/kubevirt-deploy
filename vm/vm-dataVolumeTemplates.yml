@@ -1,0 +1,101 @@
+apiVersion: kubevirt.io/v1
+kind: VirtualMachine
+metadata:
+  name: bigdata-01
+  namespace: vlan
+  annotations:
+    kubevirt.io/latest-observed-api-version: v1
+    kubevirt.io/storage-observed-api-version: v1alpha3
+spec:
+  dataVolumeTemplates:
+  - metadata:
+      labels:
+        vm.cpaas.io/reclaim-policy: Delete
+        vm.cpaas.io/used-by: bigdata-01
+      name: bigdata-01-rootfs
+    spec:
+      pvc:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 50Gi
+        storageClassName: hostpath-csi
+      source:
+        registry:
+          url: docker://harbor.mrlch.cn/kubevirt/opencloudos:v8.6-latest
+  - metadata:
+      labels:
+        vm.cpaas.io/reclaim-policy: Delete
+        vm.cpaas.io/used-by: bigdata-01
+      name: bigdata-01-data
+    spec:
+      pvc:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 50Gi
+        storageClassName: hostpath-csi
+      source:
+        blank: {}
+  running: true
+  template:
+    metadata:
+      annotations:
+        ovn.kubernetes.io/ip_pool: 192.168.10.191
+
+    spec:
+      domain:
+        devices:
+          disks:
+          - disk:
+              bus: virtio
+            name: rootfs
+          - disk:
+              bus: virtio
+            name: bigdata-01-data
+          - disk:
+              bus: virtio
+            name: cloudinitdisk
+          interfaces:
+          - bridge: {}
+            name: default
+        machine:
+          type: q35
+        resources:
+          limits:
+            cpu: "1"
+            memory: 2Gi
+          requests:
+            cpu: "1"
+            memory: 2Gi
+      networks:
+      - name: default
+        pod: {}
+      volumes:
+      - dataVolume:
+          name: bigdata-01-rootfs
+        name: rootfs
+      - dataVolume:
+          name: bigdata-01-data
+        name: bigdata-01-data
+      - cloudInitNoCloud:
+          networkData: |-
+            network:
+              version: 1
+              config:
+                - type: physical
+                  name: eth0
+                  subnets:
+                    - type: dhcp
+          userData: |-
+            #cloud-config
+            disable_root: false
+            ssh_pwauth: true
+            users:
+              - default
+              - name: root
+                lock_passwd: false
+                hashed_passwd: $1$4t.w.u.X$BkdPjEOi30r85GpIaTZ8C1
+        name: cloudinitdisk

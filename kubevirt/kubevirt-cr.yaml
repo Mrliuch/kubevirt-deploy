@@ -9,8 +9,10 @@ spec:
   configuration:
     developerConfiguration:
       featureGates:
+        - HostDisk
         - HardDisk
         - DataVolumes
+        - LiveMigration
   customizeComponents: {}
   imagePullPolicy: IfNotPresent
   workloadUpdateStrategy: {}

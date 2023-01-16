@@ -72,9 +72,10 @@ $ kubectl create -f https://github.com/kubevirt/containerized-data-importer/rele
 ```
 kubectl apply -f hostpath/cert-manager.yaml
 kubectl create ns hostpath-provisioner
+kubectl apply -f hostpath/host/kubevet-config.yml
 kubectl apply -f hostpath/operator.yml  -n hostpath-provisioner
 kubectl apply -f hostpath/webhook.yml  -n hostpath-provisioner
-kubectl apply -f hostpath/host
+kubectl apply -f hostpath/host/
 ```
 或使用官方文件进行安装
 ```
